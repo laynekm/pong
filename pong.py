@@ -8,7 +8,6 @@ pygame.display.set_caption('Snake')
 
 ready = False
 done = False
-paused = False
 clock = pygame.time.Clock()
 
 colours = [(250, 0, 0),     #red
@@ -47,7 +46,7 @@ ball2 = Ball(360, 240, 5, -2, 0)
 ball3 = Ball(360, 240, 5, 1, 1)
 balls = [ball1, ball2, ball3]
 
-changeColour():
+def changeColour():
     randInt = random.randint(0, 7)
     newCanvasColour = colours[randInt]
     if(randInt > 5):
@@ -79,10 +78,6 @@ def draw():
         p2ScoreText = font.render(str(p2.score), 1, elementColour)
         screen.blit(p1ScoreText, (720/4, 40))
         screen.blit(p2ScoreText, (720/4*3, 40))
-    if paused:
-        font = pygame.font.SysFont("monospace", 25)
-        menuText = font.render('Paused', 1, elementColour)
-        screen.blit(menuText, (720/2, 40))
 
 while not done and not ready:
     for event in pygame.event.get():
@@ -104,67 +99,59 @@ while not done:
 
     key = pygame.key.get_pressed()
 
-    #handle pausing
-    if(key[pygame.K_SPACE] and not paused):
-        paused = True
-    elif(key[pygame.K_SPACE] and paused):
-        paused = False
+    if(key[pygame.K_w] and p1.y >= 0):
+        p1.y -= p1.dy
+    if(key[pygame.K_s] and p1.y + p1.h <= 480):
+        p1.y += p1.dy
+    if(key[pygame.K_UP] and p2.y >= 0):
+        p2.y -= p2.dy
+    if(key[pygame.K_DOWN] and p2.y + p2.h <= 480):
+        p2.y += p2.dy
 
-    #handle paddle movemet
-    if not paused:
-        if(key[pygame.K_w] and p1.y >= 0):
-            p1.y -= p1.dy
-        if(key[pygame.K_s] and p1.y + p1.h <= 480):
-            p1.y += p1.dy
-        if(key[pygame.K_UP] and p2.y >= 0):
-            p2.y -= p2.dy
-        if(key[pygame.K_DOWN] and p2.y + p2.h <= 480):
-            p2.y += p2.dy
+    #handle ball movement
+    for ball in balls:
+        ball.x += ball.dx
+        ball.y += ball.dy
 
-        #handle ball movement
-        for ball in balls:
-            ball.x += ball.dx
-            ball.y += ball.dy
+        #collission with walls
+        if(ball.y - ball.r <= 0):
+            ball.dy *= -1
+        if(ball.y + ball.r >= 480):
+            ball.dy *= -1
 
-            #collission with walls
-            if(ball.y - ball.r <= 0):
-                ball.dy *= -1
-            if(ball.y + ball.r >= 480):
-                ball.dy *= -1
+        #collission with paddles, give a buffer of a couple pixels
+        if(ball.x - ball.r >= p1.x + p1.w - 1
+           and ball.x - ball.r <= p1.x + p1.w + 1
+           and ball.y >= p1.y
+           and ball.y <= p1.y + p1.h):
+            ball.dx *= -1
+            ball.dy = random.randint(0, 2)
+        if(ball.x + ball.r <= p2.x + 1
+           and ball.x + ball.r >= p2.x - 1
+           and ball.y >= p2.y
+           and ball.y <= p2.y + p2.h):
+            ball.dx *= -1
+            ball.dy = random.randint(0, 2)
 
-            #collission with paddles, give a buffer of a couple pixels
-            if(ball.x - ball.r >= p1.x + p1.w - 1
-               and ball.x - ball.r <= p1.x + p1.w + 1
-               and ball.y >= p1.y
-               and ball.y <= p1.y + p1.h):
-                ball.dx *= -1
-                ball.dy = random.randint(0, 2)
-            if(ball.x + ball.r <= p2.x + 1
-               and ball.x + ball.r >= p2.x - 1
-               and ball.y >= p2.y
-               and ball.y <= p2.y + p2.h):
-                ball.dx *= -1
-                ball.dy = random.randint(0, 2)
-
-            #scoring and replacing ball
-            if(ball.x >= 720):
-                p1.score += 1
-                ball.x = 360
-                ball.y = 240
-                ball.dx *= -1
-                ball.dy = random.randint(0, 2)
-                newColours = changeColour()
-                canvasColour = newColours[0]
-                elementColour = newColours[1]
-            if(ball.x <= 0):
-                p2.score += 1
-                ball.x = 360
-                ball.y = 240
-                ball.dx *= -1
-                ball.dy = random.randint(0, 2)
-                newColours = changeColour()
-                canvasColour = newColours[0]
-                elementColour = newColours[1]
+        #scoring and replacing ball
+        if(ball.x >= 720):
+            p1.score += 1
+            ball.x = 360
+            ball.y = 240
+            ball.dx *= -1
+            ball.dy = random.randint(0, 2)
+            newColours = changeColour()
+            canvasColour = newColours[0]
+            elementColour = newColours[1]
+        if(ball.x <= 0):
+            p2.score += 1
+            ball.x = 360
+            ball.y = 240
+            ball.dx *= -1
+            ball.dy = random.randint(0, 2)
+            newColours = changeColour()
+            canvasColour = newColours[0]
+            elementColour = newColours[1]
 
     draw()
     pygame.display.flip()
