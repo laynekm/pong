@@ -5,10 +5,11 @@ pygame.init()
 size = (720, 480)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Snake')
+clock = pygame.time.Clock()
 
 ready = False
 done = False
-clock = pygame.time.Clock()
+paused = False
 
 colours = [(250, 0, 0),     #red
            (255, 128, 0),   #orange
@@ -56,6 +57,7 @@ def changeColour():
     return [newCanvasColour, newElementColour]
 
 def draw():
+    global ready
     screen.fill(canvasColour)
     pygame.draw.rect(screen, elementColour, [p1.x, p1.y, p1.w, p1.h])
     pygame.draw.rect(screen, elementColour, [p2.x, p2.y, p2.w, p2.h])
@@ -78,83 +80,110 @@ def draw():
         p2ScoreText = font.render(str(p2.score), 1, elementColour)
         screen.blit(p1ScoreText, (720/4, 40))
         screen.blit(p2ScoreText, (720/4*3, 40))
+    if paused:
+        font = pygame.font.SysFont("monospace", 20)
+        pauseText = font.render('Paused', 1, elementColour)
+        screen.blit(pauseText, (10, 10))
 
-while not done and not ready:
-    for event in pygame.event.get():
-        if(event.type == pygame.QUIT):
-            done = True
-
-    key = pygame.key.get_pressed()
-    if(key[pygame.K_SPACE]):
-        ready = True
-
-    draw()
-    pygame.display.flip()
-    clock.tick(60)
-
-while not done:
-    for event in pygame.event.get():
-        if(event.type == pygame.QUIT):
+def startup():
+    global done
+    global ready
+    while not done and not ready:
+        for event in pygame.event.get():
+            if(event.type == pygame.QUIT):
                 done = True
 
-    key = pygame.key.get_pressed()
+        key = pygame.key.get_pressed()
+        if(key[pygame.K_SPACE]):
+            ready = True
 
-    if(key[pygame.K_w] and p1.y >= 0):
-        p1.y -= p1.dy
-    if(key[pygame.K_s] and p1.y + p1.h <= 480):
-        p1.y += p1.dy
-    if(key[pygame.K_UP] and p2.y >= 0):
-        p2.y -= p2.dy
-    if(key[pygame.K_DOWN] and p2.y + p2.h <= 480):
-        p2.y += p2.dy
+        draw()
+        pygame.display.flip()
+        clock.tick(60)
+    play()
 
-    #handle ball movement
-    for ball in balls:
-        ball.x += ball.dx
-        ball.y += ball.dy
+def play():
+    global done
+    global paused
+    while not done:
+        for event in pygame.event.get():
+            if(event.type == pygame.QUIT):
+                    done = True
 
-        #collission with walls
-        if(ball.y - ball.r <= 0):
-            ball.dy *= -1
-        if(ball.y + ball.r >= 480):
-            ball.dy *= -1
+        key = pygame.key.get_pressed()
 
-        #collission with paddles, give a buffer of a couple pixels
-        if(ball.x - ball.r >= p1.x + p1.w - 1
-           and ball.x - ball.r <= p1.x + p1.w + 1
-           and ball.y >= p1.y
-           and ball.y <= p1.y + p1.h):
-            ball.dx *= -1
-            ball.dy = random.randint(0, 2)
-        if(ball.x + ball.r <= p2.x + 1
-           and ball.x + ball.r >= p2.x - 1
-           and ball.y >= p2.y
-           and ball.y <= p2.y + p2.h):
-            ball.dx *= -1
-            ball.dy = random.randint(0, 2)
+        #handle pausing
+        if(key[pygame.K_p]):
+            if not paused:
+                paused = True
+            else:
+                paused = False
+            pygame.time.wait(100)
 
-        #scoring and replacing ball
-        if(ball.x >= 720):
-            p1.score += 1
-            ball.x = 360
-            ball.y = 240
-            ball.dx *= -1
-            ball.dy = random.randint(0, 2)
-            newColours = changeColour()
-            canvasColour = newColours[0]
-            elementColour = newColours[1]
-        if(ball.x <= 0):
-            p2.score += 1
-            ball.x = 360
-            ball.y = 240
-            ball.dx *= -1
-            ball.dy = random.randint(0, 2)
-            newColours = changeColour()
-            canvasColour = newColours[0]
-            elementColour = newColours[1]
+        if paused:
+            draw()
+            pygame.display.flip()
+            clock.tick(60)
+            continue
 
-    draw()
-    pygame.display.flip()
-    clock.tick(60)
+        #handle paddle movement
+        if(key[pygame.K_w] and p1.y >= 0):
+            p1.y -= p1.dy
+        if(key[pygame.K_s] and p1.y + p1.h <= 480):
+            p1.y += p1.dy
+        if(key[pygame.K_UP] and p2.y >= 0):
+            p2.y -= p2.dy
+        if(key[pygame.K_DOWN] and p2.y + p2.h <= 480):
+            p2.y += p2.dy
 
+        #handle ball movement
+        for ball in balls:
+            ball.x += ball.dx
+            ball.y += ball.dy
+
+            #collission with walls
+            if(ball.y - ball.r <= 0):
+                ball.dy *= -1
+            if(ball.y + ball.r >= 480):
+                ball.dy *= -1
+
+            #collission with paddles, give a buffer of a couple pixels
+            if(ball.x - ball.r >= p1.x + p1.w - 1
+               and ball.x - ball.r <= p1.x + p1.w + 1
+               and ball.y >= p1.y
+               and ball.y <= p1.y + p1.h):
+                ball.dx *= -1
+                ball.dy = random.randint(0, 2)
+            if(ball.x + ball.r <= p2.x + 1
+               and ball.x + ball.r >= p2.x - 1
+               and ball.y >= p2.y
+               and ball.y <= p2.y + p2.h):
+                ball.dx *= -1
+                ball.dy = random.randint(0, 2)
+
+            #scoring and replacing ball
+            if(ball.x >= 720):
+                p1.score += 1
+                ball.x = 360
+                ball.y = 240
+                ball.dx *= -1
+                ball.dy = random.randint(0, 2)
+                newColours = changeColour()
+                canvasColour = newColours[0]
+                elementColour = newColours[1]
+            if(ball.x <= 0):
+                p2.score += 1
+                ball.x = 360
+                ball.y = 240
+                ball.dx *= -1
+                ball.dy = random.randint(0, 2)
+                newColours = changeColour()
+                canvasColour = newColours[0]
+                elementColour = newColours[1]
+
+        draw()
+        pygame.display.flip()
+        clock.tick(60)
+
+startup()
 pygame.quit()
