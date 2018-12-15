@@ -48,8 +48,15 @@ ball3 = Ball(360, 240, 5, 1, 1)
 balls = [ball1, ball2, ball3]
 
 def changeColour():
+    global canvasColour, elementColour
+
+    #ensure the new canvas colour is different than the old one
     randInt = random.randint(0, 7)
     newCanvasColour = colours[randInt]
+    while newCanvasColour == canvasColour:
+        randInt = random.randint(0, 7)
+        newCanvasColour = colours[randInt]
+
     if(randInt > 5):
         newElementColour = colours[5]
     else:
@@ -86,8 +93,7 @@ def draw():
         screen.blit(pauseText, (10, 10))
 
 def startup():
-    global done
-    global ready
+    global done, ready
     while not done and not ready:
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
@@ -103,8 +109,7 @@ def startup():
     play()
 
 def play():
-    global done
-    global paused
+    global done, paused, canvasColour, elementColour
     while not done:
         for event in pygame.event.get():
             if(event.type == pygame.QUIT):
@@ -154,12 +159,18 @@ def play():
                and ball.y <= p1.y + p1.h):
                 ball.dx *= -1
                 ball.dy = random.randint(0, 2)
+                newColours = changeColour()
+                canvasColour = newColours[0]
+                elementColour = newColours[1]
             if(ball.x + ball.r <= p2.x + 1
                and ball.x + ball.r >= p2.x - 1
                and ball.y >= p2.y
                and ball.y <= p2.y + p2.h):
                 ball.dx *= -1
                 ball.dy = random.randint(0, 2)
+                newColours = changeColour()
+                canvasColour = newColours[0]
+                elementColour = newColours[1]
 
             #scoring and replacing ball
             if(ball.x >= 720):
@@ -168,18 +179,12 @@ def play():
                 ball.y = 240
                 ball.dx *= -1
                 ball.dy = random.randint(0, 2)
-                newColours = changeColour()
-                canvasColour = newColours[0]
-                elementColour = newColours[1]
             if(ball.x <= 0):
                 p2.score += 1
                 ball.x = 360
                 ball.y = 240
                 ball.dx *= -1
                 ball.dy = random.randint(0, 2)
-                newColours = changeColour()
-                canvasColour = newColours[0]
-                elementColour = newColours[1]
 
         draw()
         pygame.display.flip()
